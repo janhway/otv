@@ -1,4 +1,4 @@
-package com.lucine.example.spiderex;
+package com.lucine.spider.iqiyi;
 
 import java.net.MalformedURLException;
 import java.util.Map;

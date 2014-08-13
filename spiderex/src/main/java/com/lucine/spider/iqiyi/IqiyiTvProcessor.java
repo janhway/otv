@@ -1,4 +1,4 @@
-package com.lucine.example.spiderex;
+package com.lucine.spider.iqiyi;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -9,9 +9,9 @@ import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.lucine.example.entity.Episode;
-import com.lucine.example.entity.MediaType;
-import com.lucine.example.entity.Program;
+import com.lucine.spider.entity.Episode;
+import com.lucine.spider.entity.MediaType;
+import com.lucine.spider.entity.Program;
 
 import us.codecraft.webmagic.Page;
 import us.codecraft.webmagic.Request;

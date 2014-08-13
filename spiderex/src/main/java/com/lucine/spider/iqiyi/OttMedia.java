@@ -1,4 +1,4 @@
-package com.lucine.example.spiderex;
+package com.lucine.spider.iqiyi;
 
 public class OttMedia {
 	private String playUrl="";

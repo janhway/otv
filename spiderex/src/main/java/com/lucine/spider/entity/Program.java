@@ -1,4 +1,4 @@
-package com.lucine.example.entity;
+package com.lucine.spider.entity;
 
 import java.util.LinkedList;
 import java.util.List;
