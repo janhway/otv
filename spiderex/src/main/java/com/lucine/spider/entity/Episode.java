@@ -47,6 +47,7 @@ public class Episode {
 	public String toString() {
 		JSONObject jo = new JSONObject();
 		jo.put("title", title);
+		jo.put("playUrl", playUrl);
 		jo.put("picUrl", picUrl);
 		jo.put("description", description);
 		jo.put("duration", duration);		

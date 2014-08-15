@@ -6,6 +6,10 @@ import java.util.List;
 import us.codecraft.webmagic.Page;
 import us.codecraft.webmagic.Site;
 import us.codecraft.webmagic.Spider;
+import us.codecraft.webmagic.downloader.Downloader;
+import us.codecraft.webmagic.downloader.HttpClientDownloader;
+import us.codecraft.webmagic.pipeline.FilePipeline;
+import us.codecraft.webmagic.pipeline.Pipeline;
 import us.codecraft.webmagic.processor.PageProcessor;
 
 import org.jsoup.nodes.Document;
@@ -14,12 +18,27 @@ import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.lucine.spider.entity.Episode;
+import com.lucine.spider.entity.MediaType;
+import com.lucine.spider.entity.Program;
+
 public class IqiyiMovieProcessor implements PageProcessor {
 
-	private Logger log = LoggerFactory.getLogger(IqiyiMovieProcessor.class);
-	
-	private Site site = Site.me().setDomain("www.iqiyi.com").setCharset("utf-8");
+	private final Logger log = LoggerFactory.getLogger(IqiyiMovieProcessor.class);
+	private final Site site = Site.me().setDomain("www.iqiyi.com").setCharset("utf-8");
 
+	private String startUrl;
+	private int threadNum;
+	private Pipeline pipeline;
+	private Downloader downLoader;
+	
+	IqiyiMovieProcessor(String startUrl, int threadNum, Pipeline pipeline, Downloader downLoader) {
+	    this.startUrl = startUrl;
+		this.threadNum = threadNum;
+	    this.pipeline = pipeline;
+		this.downLoader = downLoader;	
+	}	
+	
 	public void process(Page page) {
 		String curPageUrl = page.getUrl().toString();
 
@@ -73,14 +92,16 @@ public class IqiyiMovieProcessor implements PageProcessor {
 	private void parseMediaDetailInfo(Page page) {
 
 		try {
-			StringBuilder logSB = new StringBuilder();
+			Program prgm = new Program();
+			prgm.setCpName("iqiyi");
+			prgm.setMediaType(MediaType.MOVIES);
+			
 			StringBuilder bld = new StringBuilder();
 
 			Document doc = page.getHtml().getDocument();
 
 			String title = doc.select("meta[itemprop=name]").first().attr("content");
-			page.putField("title", title);
-			logSB.append("title=" + title);
+			prgm.setTitle(title);
 
 			Elements eles = doc.select("div[data-widget-moviepaybtn=btn]");
 			if (eles != null && eles.first() != null) {
@@ -88,13 +109,9 @@ public class IqiyiMovieProcessor implements PageProcessor {
 				page.setSkip(true);
 				return;
 			}
-			
-			page.putField("playUrl", page.getUrl());
-			logSB.append(",playUrl=" + page.getUrl());
 
 			String datePublished = doc.select("meta[itemprop=datePublished]").first().attr("content");
-			page.putField("shangYing", datePublished);
-			logSB.append(",shangYing=" + datePublished);
+			prgm.setReleaseYear(datePublished);
 
 			// 导演
 			Elements directorEles = doc.select("span[itemprop=director]");
@@ -106,9 +123,8 @@ public class IqiyiMovieProcessor implements PageProcessor {
 			if (bld.length() > 0) {
 				bld.deleteCharAt(bld.length() - 1);
 			}
-			String director = bld.toString();
-			page.putField("director", director);
-			logSB.append(",director=" + director);
+			String directors = bld.toString();
+			prgm.setDirectors(directors);
 
 			// 主演
 			bld.setLength(0);
@@ -121,9 +137,8 @@ public class IqiyiMovieProcessor implements PageProcessor {
 			if (bld.length() > 0) {
 				bld.deleteCharAt(bld.length() - 1);
 			}
-			String actor = bld.toString();
-			page.putField("actor", actor);
-			logSB.append(",actor=" + actor);
+			String actors = bld.toString();
+			prgm.setActors(actors);
 
 			// 类型
 			bld.setLength(0);
@@ -136,46 +151,55 @@ public class IqiyiMovieProcessor implements PageProcessor {
 				bld.deleteCharAt(bld.length() - 1);
 			}
 			String genre = bld.toString();
-			page.putField("genre", genre);
-			logSB.append(",genre=" + genre);
+			prgm.setGenre(genre);
 
 			// 简介
 			String description = doc.select("meta[itemprop=description]")
 					.first().attr("content");
-			page.putField("description", description);
-			logSB.append(",description=" + description);
+			prgm.setDescription(description);
 
 			// 海报URL
 			String picUrl = doc.select("item meta[itemprop=image]").first()
 					.attr("content");
-			page.putField("picUrl", picUrl);
-			logSB.append(",picUrl=" + picUrl);
+			prgm.setPicUrl(picUrl);
 
-			// 播放时长
-			String duration = doc.select("item meta[itemprop=duration]")
-					.first().attr("content");
-			page.putField("duration", duration);
-			logSB.append(",duration=" + duration);
-
-			// 播放时长
+			// 地区
 			String origCountry = doc
 					.select("item meta[itemprop=contentLocation]").first()
 					.attr("content");
-			page.putField("origCountry", origCountry);
-			logSB.append(",origCountry=" + origCountry);
+			prgm.setOriginCountry(origCountry);
 
 			// 评分
 			String ratingValue = doc
 					.select("item div meta[itemprop=ratingValue]").first()
 					.attr("content");
-			page.putField("ratingValue", ratingValue);
-			logSB.append(",ratingValue=" + ratingValue);
+			prgm.setScore(ratingValue);
 
-			// 播放次数
+			// 播放次数  fix it later.
 
-			//log.info("MediaDetailInfo:" + logSB.toString());
+			
+			// 子集信息，电影固定只有一个子集
+			Episode ep = new Episode();
+			ep.setTitle(title);
+			ep.setPlayUrl(page.getUrl().toString());
+			
+			// 播放时长
+			String duration = doc.select("item meta[itemprop=duration]")
+					.first().attr("content");
+			ep.setDuration(duration);
+			
+			List<Episode> episodes = new ArrayList<Episode>();
+
+			episodes.add(ep);
+			prgm.setEpisodeList(episodes);
+			prgm.setEpisodeTotalNum("1");
+			prgm.setEpisodeUpdNum("1");
+			
+			page.putField(title, prgm);
 
 		} catch (Exception e) {
+			page.setSkip(true);
+			log.error(page.getUrl().toString());
 			log.error("", e);
 		}
 	}	
@@ -183,12 +207,16 @@ public class IqiyiMovieProcessor implements PageProcessor {
 	public Site getSite() {
 		return site;
 	}
-
+	
+	public void run() {
+		// when thread can't stop correctly,JVM will not terminate. fix it later. 
+		Spider.create(this).thread(threadNum).addUrl(startUrl).addPipeline(pipeline).run();
+	}
+	
 	public static void main(String[] args) {
-		Spider.create(new IqiyiMovieProcessor())
-				.thread(5)
-				.addUrl("http://list.iqiyi.com/www/1/-------------10-1-1-iqiyi--.html").run();
-				//.addPipeline(new SolrPipeline()).run();
+		String startUrl = "http://list.iqiyi.com/www/1/-------------10-1-1-iqiyi--.html";
+		IqiyiMovieProcessor pp = new IqiyiMovieProcessor(startUrl,1, new FilePipeline("D:\\logs"),new HttpClientDownloader());
+		pp.run();
 	}
 }
 

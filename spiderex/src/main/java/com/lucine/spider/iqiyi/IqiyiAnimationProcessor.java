@@ -24,10 +24,9 @@ import us.codecraft.webmagic.pipeline.FilePipeline;
 import us.codecraft.webmagic.pipeline.Pipeline;
 import us.codecraft.webmagic.processor.PageProcessor;
 
-//Task待去掉，比较丑
-public class IqiyiTvProcessor implements PageProcessor, Task {
+public class IqiyiAnimationProcessor implements PageProcessor,Task {
 	
-	private final Logger log = LoggerFactory.getLogger(IqiyiTvProcessor.class);
+	private final Logger log = LoggerFactory.getLogger(IqiyiAnimationProcessor.class);
 	private final Site site = Site.me().setDomain("www.iqiyi.com").setCharset("utf-8");
 
 	private String startUrl;
@@ -35,7 +34,7 @@ public class IqiyiTvProcessor implements PageProcessor, Task {
 	private Pipeline pipeline;
 	private Downloader downLoader;
 	
-	IqiyiTvProcessor(String startUrl, int threadNum, Pipeline pipeline, Downloader downLoader) {
+	IqiyiAnimationProcessor(String startUrl, int threadNum, Pipeline pipeline, Downloader downLoader) {
 	    this.startUrl = startUrl;
 		this.threadNum = threadNum;
 	    this.pipeline = pipeline;
@@ -57,7 +56,7 @@ public class IqiyiTvProcessor implements PageProcessor, Task {
 	
 	private void parseMediaListInfo(Page page) {
 		try {
-			log.info(" TV parseMediaListInfo One page begin:");
+			log.info(" Animation parseMediaListInfo One page begin:");
 
 			List<String> detailsRequests = new ArrayList<String>();
 
@@ -86,7 +85,7 @@ public class IqiyiTvProcessor implements PageProcessor, Task {
 
 			page.setSkip(true);
 
-			log.info("TV parseMediaListInfo One page finished....");
+			log.info("Animation parseMediaListInfo One page finished....");
 		} catch (Exception e) {
 			log.error(page.getUrl().toString());
 			log.error("", e);
@@ -121,45 +120,20 @@ public class IqiyiTvProcessor implements PageProcessor, Task {
 			
 			Program prgm = new Program();
 			prgm.setCpName("iqiyi");
-			prgm.setMediaType(MediaType.TV);
+			prgm.setMediaType(MediaType.ANIMATION);
 			
 			prgm.setTitle(title);
 			logSB.append("title=" + title);
+			
+			// 获取评分  fix it later.
 
-			String datePublished =introZone.select("a[rseat=issueTime]").first().text().trim();
-			prgm.setReleaseYear(datePublished);
-			logSB.append(",releaseyear=" + datePublished);
-
-			// 导演
-			Elements eles = introZone.select("p:contains(导演)").first().select("a");
-			for (int i = 0; i < eles.size(); i++) {
-				bld.append(eles.get(i).text().trim());
-				bld.append("/");
-			}
-			if (bld.length() > 0) {
-				bld.deleteCharAt(bld.length() - 1);
-			}
-			String director = bld.toString();
-			prgm.setDescription(director);
-			logSB.append(",director=" + director);
-
-			// 主演
-			bld.setLength(0);
-			eles = introZone.select("p:contains(主演)").first().select("a");
-			for (int i = 0; i < eles.size(); i++) {
-				bld.append(eles.get(i).text().trim());
-				bld.append("/");
-			}
-			if (bld.length() > 0) {
-				bld.deleteCharAt(bld.length() - 1);
-			}
-			String actors = bld.toString();
-			prgm.setActors(actors);
-			logSB.append(",actors=" + actors);
+//			String datePublished =introZone.select("a[rseat=issueTime]").first().text().trim();
+//			prgm.setReleaseYear(datePublished);
+//			logSB.append(",releaseyear=" + datePublished);
 
 			// 类型
 			bld.setLength(0);
-			eles = introZone.select("p:contains(类型)").first().select("a");
+			Elements eles = introZone.select("p:contains(标签)").first().select("a");
 			for (int i = 0; i < eles.size(); i++) {
 				String text = eles.get(i).text().trim();
 				if (text == null || text.length() == 0) {
@@ -274,8 +248,8 @@ public class IqiyiTvProcessor implements PageProcessor, Task {
 	}
 	
 	public static void main(String[] args) {
-		String startUrl = "http://list.iqiyi.com/www/2/-------------10-1-1-iqiyi--.html";
-		IqiyiTvProcessor pp = new IqiyiTvProcessor(startUrl,1, new FilePipeline("D:\\logs"),new HttpClientDownloader());
+		String startUrl = "http://list.iqiyi.com/www/4/------------------.html";
+		IqiyiAnimationProcessor pp = new IqiyiAnimationProcessor(startUrl,1, new FilePipeline("D:\\logs"),new HttpClientDownloader());
 		pp.run();
 	}
 	
