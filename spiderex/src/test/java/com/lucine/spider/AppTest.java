@@ -1,4 +1,4 @@
-package com.lucine.example.spiderex;
+package com.lucine.spider;
 
 import junit.framework.Test;
 import junit.framework.TestCase;

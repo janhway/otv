@@ -20,7 +20,7 @@
 			<artifactId>webmagic-core</artifactId>
 			<version>0.5.2</version>
 		</dependency>
-		<dependency>
+		<!-- <dependency>
 			<groupId>us.codecraft</groupId>
 			<artifactId>webmagic-extension</artifactId>
 			<version>0.5.2</version>
@@ -29,7 +29,7 @@
 			<groupId>us.codecraft</groupId>
 			<artifactId>webmagic-lucene</artifactId>
 			<version>0.4.4-SNAPSHOT</version>
-		</dependency>
+		</dependency>  -->
 
 		<dependency>
 			<groupId>org.apache.solr</groupId>
