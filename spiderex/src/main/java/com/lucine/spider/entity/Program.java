@@ -36,6 +36,9 @@ public class Program {
 	// 海报URL picUrl
 	private String picUrl;
 	
+	// 播放Url
+	private String playUrl;
+	
 	// 评分 score
 	private String score;
 
@@ -167,22 +170,20 @@ public class Program {
 		JSONObject jo = new JSONObject();
 		jo.put("cpName", cpName);
 		jo.put("mediaType", mediaType);
-		jo.put("description", description);
 		jo.put("title", title);	
 		jo.put("directors", directors);
 		jo.put("actors", actors);
-		jo.put("originCountry", originCountry);
 		jo.put("releaseYear", releaseYear);	
 		jo.put("genre", genre);
+		jo.put("originCountry", originCountry);
 		jo.put("picUrl", picUrl);
+		jo.put("playUrl", playUrl);
 		jo.put("score", score);
+		jo.put("playNum", playNum);
 		jo.put("episodeTotalNum", episodeTotalNum);
 		jo.put("episodeUpdNum", episodeUpdNum);
-		List<String> epJsonStrList = new LinkedList<String>();
-		for(Episode ep: episodeList) {
-			epJsonStrList.add(ep.toString());
-		}
-		jo.put("episodeList", epJsonStrList);
+		jo.put("description", description);
+		jo.put("episodeList", episodeList);
 		
 		return jo.toString();
 	}
@@ -193,6 +194,14 @@ public class Program {
 
 	public void setPlayNum(String playNum) {
 		this.playNum = playNum;
+	}
+
+	public String getPlayUrl() {
+		return playUrl;
+	}
+
+	public void setPlayUrl(String playUrl) {
+		this.playUrl = playUrl;
 	}
 
 }

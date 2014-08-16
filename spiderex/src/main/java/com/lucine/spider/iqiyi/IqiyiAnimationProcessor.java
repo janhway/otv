@@ -1,7 +1,9 @@
 package com.lucine.spider.iqiyi;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -11,6 +13,7 @@ import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.alibaba.fastjson.JSONObject;
 import com.lucine.spider.entity.Episode;
 import com.lucine.spider.entity.MediaType;
 import com.lucine.spider.entity.Program;
@@ -54,8 +57,6 @@ public class IqiyiAnimationProcessor implements PageProcessor,Task {
 
 	}
 	
-
-	
 	private void parseMediaListInfo(Page page) {
 		try {
 			log.info(" Animation parseMediaListInfo One page begin:");
@@ -97,114 +98,154 @@ public class IqiyiAnimationProcessor implements PageProcessor,Task {
 
 	private void parseMediaDetailInfo(Page page) {
 
+		String curUrl = page.getUrl().toString();
+		
 		try {
-			StringBuilder logSB = new StringBuilder();
 			StringBuilder bld = new StringBuilder();
 			Document doc = page.getHtml().getDocument();
-			
-			//div class="rtxt introZone"
-			Elements introZZ = null;
-			introZZ = doc.select("div[class=rtxt introZone]");
-			if (introZZ == null || introZZ.size() == 0)
-			{
-				introZZ = doc.select("div[class=rtxt]");
-			}
-			Element introZone = introZZ.first();
-
-			// 获取节目名称
-			Element titleEle = introZone.select("a[rseat=tvName]").first();
-			if (titleEle == null)
-			{
-				titleEle = introZone.select("h2 strong a").first();
-			}					
-			String title = 	titleEle.text().trim();
-			if(title == null || title.length() == 0)
-			{
-				log.error("cant get title.fix it later.url="+page.getUrl().toString());
-				page.setSkip(true);
-				return;
-			}
 			
 			Program prgm = new Program();
 			prgm.setCpName("iqiyi");
 			prgm.setMediaType(MediaType.ANIMATION);
 			
-			// 获取节目名称
-			prgm.setTitle(title);
-			logSB.append("title=" + title);
+			getTitleByScriptArea(doc,prgm);
 			
-			String albumId = getAlbumId(introZone);
-			if (albumId != null) {
-				// 获取评分
-				String score = getScoreByAlbumid(albumId);
-				prgm.setScore(score);
-				logSB.append(",score=" + score);
-				
-				// 获取播放次数
-				String playNum = getPlayNumByAlbumid(albumId);
-				prgm.setPlayNum(playNum);
-				logSB.append(",playNum=" + playNum);
+			if(prgm.getTitle() == null)
+			{
+				log.error("fail to get title.curUrl="+curUrl);
+				page.setSkip(true);
+				return;
 			}
-
-//			String datePublished =introZone.select("a[rseat=issueTime]").first().text().trim();
-//			prgm.setReleaseYear(datePublished);
-//			logSB.append(",releaseyear=" + datePublished);
-
-			// 类型
-			bld.setLength(0);
-			Elements eles = introZone.select("p:contains(标签)").first().select("a");
-			for (int i = 0; i < eles.size(); i++) {
-				String text = eles.get(i).text().trim();
-				if (text == null || text.length() == 0) {
-					continue;
-				}
-				bld.append(eles.get(i).text().trim());
-				bld.append("/");
-			}
-			if (bld.length() > 0) {
-				bld.deleteCharAt(bld.length() - 1);
-			}
-			String genre = bld.toString();
-			prgm.setGenre(genre);
-			logSB.append(",genre=" + genre);
-
-			// 简介   id="j-album-more"
-			String description = introZone.select("div[id=j-album-more]").first().text().trim();
-			prgm.setDescription(description);
-			logSB.append(",description=" + description);
 			
-			// 多少集
-			//span class="upALL"
-			try{
-			String totalCount = doc.select("span.upAll").first().text();
-			prgm.setEpisodeTotalNum(totalCount);
-			}catch(Exception ee){
-				prgm.setEpisodeTotalNum("fix it later");
-			}
-					
+			getInfoByScriptArea(doc,prgm);
+			
 			List<Episode> episodes = getEpisodeList(doc);
 			prgm.setEpisodeList(episodes);
 			
 			page.putField(prgm.getTitle(), prgm);
+			
+			log.info(prgm.toString());
 
 		} catch (Exception e) {
 			page.setSkip(true);
-			log.error(page.getUrl().toString());
+			log.error("Exception:curUrl="+ curUrl);
 			log.error("", e);
 		}
 	}
 	
-	
-	private void getInfoByScriptArea(Document doc, Program prgm) {
-		//<script type="text/javascript">
-		Element ele = doc.select("script[type=text/javascript]:contains(var albumInfo=)").first();
-		if (ele == null) {
+	private void getTitleByScriptArea(Document doc, Program prgm) {
+		
+		Pattern p = Pattern.compile(".*var\\s*info=(\\{.*\\}).*");
+		String titleJson = null;
+		
+		Elements eles = doc.select("script[type=text/javascript]");
+		for(Element ele:eles)
+		{
+			String data = ele.outerHtml();
+			Matcher m = p.matcher(data);
+			if(m.find()) {
+				titleJson = m.group(1);
+				//log.info("titleJson="+titleJson);
+				break;
+			}
+		}
+		
+		if (titleJson == null) {
 			return;
 		}
-		Pattern p = Pattern.compile("var albumInfo=(.*)");
+		
+		JSONObject jo = JSONObject.parseObject(titleJson);
+		//log.info("title=="+jo.get("title"));
+		prgm.setTitle(jo.get("title").toString());
+		return;
+	}
+	
+	private void getInfoByScriptArea(Document doc, Program prgm) {
+		
+		Pattern p = Pattern.compile(".*var\\s*albumInfo=(\\{.*\\}).*");
+		
+		String albumInfoJson = null;
+		
+		Elements eles = doc.select("script[type=text/javascript]");
+		for (Element ele : eles) {
+			String data = ele.outerHtml();
+			Matcher m = p.matcher(data);
+			if (m.find()) {
+				albumInfoJson = m.group(1);
+				log.info("albumInfoJson=" + albumInfoJson);
+				break;
+			}
+		}
+		
+		if (albumInfoJson == null) {
+			return;
+		}
+		
+		JSONObject jo = JSONObject.parseObject(albumInfoJson);
+
+		Object ob = null;
+		JSONObject subJo = null;
+		
+		// 海报
+		ob = jo.get("tvPictureUrl");
+		prgm.setPicUrl(ob.toString());
+
+		// 播放url
+		ob = jo.get("tvPurl");
+		prgm.setPlayUrl(ob.toString());
+		
+		// 年代
+		ob = jo.get("issueTime");
+		prgm.setReleaseYear(ob.toString());
+
+		String strValue = getAreaOrGenre(jo, "types");
+		prgm.setGenre(strValue);
+		
+		// 地区
+		strValue = getAreaOrGenre(jo, "areas");
+		prgm.setOriginCountry(strValue);
+		
+		// 评分
+		subJo = (JSONObject)jo.get("albumUpDown");
+		ob = subJo.get("score");
+		prgm.setScore(ob.toString());
+		
+		// 播放次数
+		ob = jo.get("playCounts");
+		prgm.setPlayNum(String.valueOf(ob));
+		
+		// 更新到第几集
+		ob = jo.get("currentMaxEpisode");
+		prgm.setEpisodeUpdNum(ob.toString());
+
+		// 总集数
+		ob = jo.get("episodeCounts");
+		prgm.setEpisodeTotalNum(ob.toString());
+
+		// 描述
+		ob = jo.get("tvDesc");
+		prgm.setDescription(ob.toString());
+		
+		return;
 	}
 
-	
+	private String getAreaOrGenre(JSONObject jo, String keyName) {
+		
+		StringBuilder sb = new StringBuilder(100);
+		
+		JSONObject subJo;
+		// 类型
+		subJo = JSONObject.parseObject((String)jo.get(keyName));
+		Set<String> keySet = subJo.keySet();
+		for (String str : keySet) {
+			sb.append(subJo.get(str).toString()).append("/");
+		}
+		if (sb.length() > 0) {
+			sb.setLength(sb.length() - 1);
+		}
+		
+		return sb.toString();
+	}	
 	
 	private String getScoreByAlbumid(String albumId) {
 		String url = "http://score.video.qiyi.com/ud/"+albumId+"/";
@@ -255,7 +296,7 @@ public class IqiyiAnimationProcessor implements PageProcessor,Task {
 			for (Element e : pgEles) {
 				
 				Element subE = e.select("p a").first();
-				String title = subE.attr("title");
+				String title = subE.text();
 
 				Episode episode = new Episode();
 				episode.setTitle(title);
@@ -263,7 +304,7 @@ public class IqiyiAnimationProcessor implements PageProcessor,Task {
 				String playUrl = subE.attr("href");
 				episode.setPlayUrl(playUrl);
 
-				String picUrl = e.select("a img").first().attr("data-lazy");
+				String picUrl = e.select("a img").first().attr("src");
 				episode.setPicUrl(picUrl);
 
 				String dur = e.select("a span.s2").first().text();
