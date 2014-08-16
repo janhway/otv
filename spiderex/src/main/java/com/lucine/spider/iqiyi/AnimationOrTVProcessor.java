@@ -136,33 +136,6 @@ public class AnimationOrTVProcessor implements PageProcessor,Task {
 		}
 	}
 	
-	private void getTitleByScriptArea(Document doc, Program prgm) {
-		
-		Pattern p = Pattern.compile(".*var\\s*info=(\\{.*\\}).*");
-		String titleJson = null;
-		
-		Elements eles = doc.select("script[type=text/javascript]");
-		for(Element ele:eles)
-		{
-			String data = ele.outerHtml();
-			Matcher m = p.matcher(data);
-			if(m.find()) {
-				titleJson = m.group(1);
-				//log.info("titleJson="+titleJson);
-				break;
-			}
-		}
-		
-		if (titleJson == null) {
-			return;
-		}
-		
-		JSONObject jo = JSONObject.parseObject(titleJson);
-		//log.info("title=="+jo.get("title"));
-		prgm.setTitle(jo.get("title").toString());
-		return;
-	}
-	
 	private void getInfoByScriptArea(Document doc, Program prgm) {
 		
 		Pattern p = Pattern.compile(".*var\\s*albumInfo\\s*=\\s*(\\{.*\\}).*");
@@ -222,9 +195,11 @@ public class AnimationOrTVProcessor implements PageProcessor,Task {
 		
 		// 评分
 		subJo = (JSONObject)jo.get("albumUpDown");
-		ob = subJo.get("score");
-		prgm.setScore(ob.toString());
-		
+		if (subJo != null) {
+			ob = subJo.get("score");
+			prgm.setScore(ob.toString());
+		}
+
 		// 播放次数
 		ob = jo.get("playCounts");
 		prgm.setPlayNum(String.valueOf(ob));
