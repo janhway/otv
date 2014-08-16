@@ -38,6 +38,9 @@ public class Program {
 	
 	// 评分 score
 	private String score;
+
+	// 播放次数
+	private String playNum;
 	
 	// 总集数 episodeTotalNum
 	private String episodeTotalNum;
@@ -182,6 +185,14 @@ public class Program {
 		jo.put("episodeList", epJsonStrList);
 		
 		return jo.toString();
+	}
+
+	public String getPlayNum() {
+		return playNum;
+	}
+
+	public void setPlayNum(String playNum) {
+		this.playNum = playNum;
 	}
 
 }

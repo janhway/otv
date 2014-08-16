@@ -2,6 +2,8 @@ package com.lucine.spider.iqiyi;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -98,7 +100,6 @@ public class IqiyiAnimationProcessor implements PageProcessor,Task {
 		try {
 			StringBuilder logSB = new StringBuilder();
 			StringBuilder bld = new StringBuilder();
-
 			Document doc = page.getHtml().getDocument();
 			
 			//div class="rtxt introZone"
@@ -108,12 +109,18 @@ public class IqiyiAnimationProcessor implements PageProcessor,Task {
 			{
 				introZZ = doc.select("div[class=rtxt]");
 			}
-			
 			Element introZone = introZZ.first();
 
-			String title = introZone.select("a[rseat=tvName]").first().text().trim();
+			// 获取节目名称
+			Element titleEle = introZone.select("a[rseat=tvName]").first();
+			if (titleEle == null)
+			{
+				titleEle = introZone.select("h2 strong a").first();
+			}					
+			String title = 	titleEle.text().trim();
 			if(title == null || title.length() == 0)
 			{
+				log.error("cant get title.fix it later.url="+page.getUrl().toString());
 				page.setSkip(true);
 				return;
 			}
@@ -122,10 +129,22 @@ public class IqiyiAnimationProcessor implements PageProcessor,Task {
 			prgm.setCpName("iqiyi");
 			prgm.setMediaType(MediaType.ANIMATION);
 			
+			// 获取节目名称
 			prgm.setTitle(title);
 			logSB.append("title=" + title);
 			
-			// 获取评分  fix it later.
+			String albumId = getAlbumId(introZone);
+			if (albumId != null) {
+				// 获取评分
+				String score = getScoreByAlbumid(albumId);
+				prgm.setScore(score);
+				logSB.append(",score=" + score);
+				
+				// 获取播放次数
+				String playNum = getPlayNumByAlbumid(albumId);
+				prgm.setPlayNum(playNum);
+				logSB.append(",playNum=" + playNum);
+			}
 
 //			String datePublished =introZone.select("a[rseat=issueTime]").first().text().trim();
 //			prgm.setReleaseYear(datePublished);
@@ -175,6 +194,52 @@ public class IqiyiAnimationProcessor implements PageProcessor,Task {
 		}
 	}
 	
+	
+	private void getInfoByScriptArea(Document doc, Program prgm) {
+		//<script type="text/javascript">
+		Element ele = doc.select("script[type=text/javascript]:contains(var albumInfo=)").first();
+		if (ele == null) {
+			return;
+		}
+		Pattern p = Pattern.compile("var albumInfo=(.*)");
+	}
+
+	
+	
+	private String getScoreByAlbumid(String albumId) {
+		String url = "http://score.video.qiyi.com/ud/"+albumId+"/";
+		Page page = downLoader.download(new Request(url), this);
+		String data = page.getRawText();
+		log.info("data="+data);
+		Pattern p = Pattern.compile(".*,\"score\":\\s*(\\d+\\.\\d).*");
+		Matcher m = p.matcher(data);
+		if(m.find()) {
+			return m.group(1);
+		}
+		return null;
+	}
+
+	private String getPlayNumByAlbumid(String albumId) {
+		//http://cache.video.qiyi.com/jp/pc/167419/
+		String url = "http://cache.video.qiyi.com/jp/pc/"+albumId+"/";
+		Page page = downLoader.download(new Request(url), this);
+		String data = page.getRawText();
+		log.info("data="+data);
+		Pattern p = Pattern.compile(".*:\\s*(\\d+)}]");
+		Matcher m = p.matcher(data);
+		if(m.find()) {
+			return m.group(1);
+		}
+		return null;
+	}
+
+	private String getAlbumId(Element introZone) {
+		//span id="widget-playcount"
+		Element albumIdEle = introZone.select("span#widget-playcount").first();
+		String albumId = albumIdEle.attr("data-dynamic-albumid");
+		log.info("albumId="+albumId);
+		return albumId;
+	}
 
 	private List<Episode> parseEpisodeListInfo(Page page) {
 
