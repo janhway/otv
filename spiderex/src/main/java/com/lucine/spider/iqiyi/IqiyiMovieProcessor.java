@@ -110,34 +110,16 @@ public class IqiyiMovieProcessor implements PageProcessor {
 				return;
 			}
 
+			// 年代   格式 20120102 fix it later
 			String datePublished = doc.select("meta[itemprop=datePublished]").first().attr("content");
 			prgm.setReleaseYear(datePublished);
 
 			// 导演
-			Elements directorEles = doc.select("span[itemprop=director]");
-			for (int i = 0; i < directorEles.size(); i++) {
-				bld.append(directorEles.get(i).select("meta[itemprop=name]")
-						.first().attr("content"));
-				bld.append("/");
-			}
-			if (bld.length() > 0) {
-				bld.deleteCharAt(bld.length() - 1);
-			}
-			String directors = bld.toString();
+			String directors = getDirectorOrActor(doc, "span[itemprop=director]");
 			prgm.setDirectors(directors);
 
 			// 主演
-			bld.setLength(0);
-			Elements actorEles = doc.select("item[itemprop=actor]");
-			for (int i = 0; i < actorEles.size(); i++) {
-				bld.append(actorEles.get(i).select("meta[itemprop=name]")
-						.first().attr("content"));
-				bld.append("/");
-			}
-			if (bld.length() > 0) {
-				bld.deleteCharAt(bld.length() - 1);
-			}
-			String actors = bld.toString();
+			String actors = getDirectorOrActor(doc, "item[itemprop=actor]");
 			prgm.setActors(actors);
 
 			// 类型
@@ -202,6 +184,25 @@ public class IqiyiMovieProcessor implements PageProcessor {
 			log.error(page.getUrl().toString());
 			log.error("", e);
 		}
+	}
+
+	private String getDirectorOrActor(Document doc, String cssSelector) {
+		
+		//String selV = String.format("span[itemprop=%s]", cssSelector);
+		
+		StringBuilder bld = new StringBuilder(100);
+		
+		Elements directorEles = doc.select(cssSelector);
+		for (int i = 0; i < directorEles.size(); i++) {
+			bld.append(directorEles.get(i).select("meta[itemprop=name]")
+					.first().attr("content"));
+			bld.append("/");
+		}
+		if (bld.length() > 0) {
+			bld.deleteCharAt(bld.length() - 1);
+		}
+		String directors = bld.toString();
+		return directors;
 	}	
 
 	public Site getSite() {
