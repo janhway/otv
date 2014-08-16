@@ -13,12 +13,6 @@ import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
-import com.lucine.spider.entity.Episode;
-import com.lucine.spider.entity.MediaType;
-import com.lucine.spider.entity.Program;
-
 import us.codecraft.webmagic.Page;
 import us.codecraft.webmagic.Request;
 import us.codecraft.webmagic.Site;
@@ -30,19 +24,26 @@ import us.codecraft.webmagic.pipeline.FilePipeline;
 import us.codecraft.webmagic.pipeline.Pipeline;
 import us.codecraft.webmagic.processor.PageProcessor;
 
-//Task待去掉，比较丑
-public class IqiyiTvProcessor implements PageProcessor, Task {
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+import com.lucine.spider.entity.Episode;
+import com.lucine.spider.entity.MediaType;
+import com.lucine.spider.entity.Program;
+
+public class AnimationOrTVProcessor implements PageProcessor,Task {
 	
-	private final Logger log = LoggerFactory.getLogger(IqiyiTvProcessor.class);
+	private final Logger log = LoggerFactory.getLogger(AnimationOrTVProcessor.class);
 	private final Site site = Site.me().setDomain("www.iqiyi.com").setCharset("utf-8");
 
+	private MediaType mt;
 	private String startUrl;
 	private int threadNum;
 	private Pipeline pipeline;
 	private Downloader downLoader;
 	
-	IqiyiTvProcessor(String startUrl, int threadNum, Pipeline pipeline, Downloader downLoader) {
-	    this.startUrl = startUrl;
+	AnimationOrTVProcessor(MediaType mt, String startUrl, int threadNum, Pipeline pipeline, Downloader downLoader) {
+	    this.mt = mt;
+		this.startUrl = startUrl;
 		this.threadNum = threadNum;
 	    this.pipeline = pipeline;
 		this.downLoader = downLoader;	
@@ -61,7 +62,7 @@ public class IqiyiTvProcessor implements PageProcessor, Task {
 	
 	private void parseMediaListInfo(Page page) {
 		try {
-			log.info(" TV parseMediaListInfo One page begin:");
+			log.info("parseMediaListInfo---One page begin.MediaType="+mt.toString());
 
 			List<String> detailsRequests = new ArrayList<String>();
 
@@ -90,7 +91,8 @@ public class IqiyiTvProcessor implements PageProcessor, Task {
 
 			page.setSkip(true);
 
-			log.info("TV parseMediaListInfo One page finished....");
+			log.info("parseMediaListInfo---One page finished. MediaType="+mt.toString());
+
 		} catch (Exception e) {
 			log.error(page.getUrl().toString());
 			log.error("", e);
@@ -107,7 +109,7 @@ public class IqiyiTvProcessor implements PageProcessor, Task {
 			
 			Program prgm = new Program();
 			prgm.setCpName("iqiyi");
-			prgm.setMediaType(MediaType.TV);
+			prgm.setMediaType(MediaType.ANIMATION);
 			
 			//getTitleByScriptArea(doc,prgm);
 			
@@ -274,41 +276,6 @@ public class IqiyiTvProcessor implements PageProcessor, Task {
 		
 		return sb.toString();
 	}	
-	
-	private String getScoreByAlbumid(String albumId) {
-		String url = "http://score.video.qiyi.com/ud/"+albumId+"/";
-		Page page = downLoader.download(new Request(url), this);
-		String data = page.getRawText();
-		log.info("data="+data);
-		Pattern p = Pattern.compile(".*,\"score\":\\s*(\\d+\\.\\d).*");
-		Matcher m = p.matcher(data);
-		if(m.find()) {
-			return m.group(1);
-		}
-		return null;
-	}
-
-	private String getPlayNumByAlbumid(String albumId) {
-		//http://cache.video.qiyi.com/jp/pc/167419/
-		String url = "http://cache.video.qiyi.com/jp/pc/"+albumId+"/";
-		Page page = downLoader.download(new Request(url), this);
-		String data = page.getRawText();
-		log.info("data="+data);
-		Pattern p = Pattern.compile(".*:\\s*(\\d+)}]");
-		Matcher m = p.matcher(data);
-		if(m.find()) {
-			return m.group(1);
-		}
-		return null;
-	}
-
-	private String getAlbumId(Element introZone) {
-		//span id="widget-playcount"
-		Element albumIdEle = introZone.select("span#widget-playcount").first();
-		String albumId = albumIdEle.attr("data-dynamic-albumid");
-		log.info("albumId="+albumId);
-		return albumId;
-	}
 
 	private List<Episode> parseEpisodeListInfo(Page page) {
 
@@ -385,9 +352,13 @@ public class IqiyiTvProcessor implements PageProcessor, Task {
 	}
 	
 	public static void main(String[] args) {
-		String startUrl = "http://list.iqiyi.com/www/2/-------------10-1-1-iqiyi--.html";
-		IqiyiTvProcessor pp = new IqiyiTvProcessor(startUrl,1, new FilePipeline("D:\\logs"),new HttpClientDownloader());
+		String startUrl = "http://list.iqiyi.com/www/4/------------------.html";
+		AnimationOrTVProcessor pp = new AnimationOrTVProcessor(MediaType.ANIMATION, startUrl,1, new FilePipeline("D:\\logs"),new HttpClientDownloader());
 		pp.run();
+		
+		startUrl = "http://list.iqiyi.com/www/2/-------------10-1-1-iqiyi--.html";
+		AnimationOrTVProcessor ppa = new AnimationOrTVProcessor(MediaType.TV, startUrl,1, new FilePipeline("D:\\logs"),new HttpClientDownloader());
+		ppa.run();
 	}
 	
 	public Site getSite() {
@@ -399,6 +370,4 @@ public class IqiyiTvProcessor implements PageProcessor, Task {
             return site.getDomain();
         }
 		return "no UUID-fix it later";
-	}
-
-}
+	}}

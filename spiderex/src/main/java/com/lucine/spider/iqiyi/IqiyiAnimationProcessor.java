@@ -1,7 +1,7 @@
 package com.lucine.spider.iqiyi;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -13,6 +13,7 @@ import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.lucine.spider.entity.Episode;
 import com.lucine.spider.entity.MediaType;
@@ -101,14 +102,15 @@ public class IqiyiAnimationProcessor implements PageProcessor,Task {
 		String curUrl = page.getUrl().toString();
 		
 		try {
-			StringBuilder bld = new StringBuilder();
 			Document doc = page.getHtml().getDocument();
 			
 			Program prgm = new Program();
 			prgm.setCpName("iqiyi");
 			prgm.setMediaType(MediaType.ANIMATION);
 			
-			getTitleByScriptArea(doc,prgm);
+			//getTitleByScriptArea(doc,prgm);
+			
+			getInfoByScriptArea(doc,prgm);
 			
 			if(prgm.getTitle() == null)
 			{
@@ -116,8 +118,6 @@ public class IqiyiAnimationProcessor implements PageProcessor,Task {
 				page.setSkip(true);
 				return;
 			}
-			
-			getInfoByScriptArea(doc,prgm);
 			
 			List<Episode> episodes = getEpisodeList(doc);
 			prgm.setEpisodeList(episodes);
@@ -162,7 +162,7 @@ public class IqiyiAnimationProcessor implements PageProcessor,Task {
 	
 	private void getInfoByScriptArea(Document doc, Program prgm) {
 		
-		Pattern p = Pattern.compile(".*var\\s*albumInfo=(\\{.*\\}).*");
+		Pattern p = Pattern.compile(".*var\\s*albumInfo\\s*=\\s*(\\{.*\\}).*");
 		
 		String albumInfoJson = null;
 		
@@ -186,6 +186,10 @@ public class IqiyiAnimationProcessor implements PageProcessor,Task {
 		Object ob = null;
 		JSONObject subJo = null;
 		
+		// 节目名称
+		ob = jo.get("tvName");
+		prgm.setTitle(ob.toString());
+
 		// 海报
 		ob = jo.get("tvPictureUrl");
 		prgm.setPicUrl(ob.toString());
@@ -194,11 +198,19 @@ public class IqiyiAnimationProcessor implements PageProcessor,Task {
 		ob = jo.get("tvPurl");
 		prgm.setPlayUrl(ob.toString());
 		
+		// 导演   "directors":["蒋家骏"]
+		String strValue  = getDirectorOrActor(jo, "directors");
+		prgm.setDirectors(strValue);
+		
+		// 演员 
+		strValue  = getDirectorOrActor(jo, "mainActors");
+		prgm.setActors(strValue);
+		
 		// 年代
 		ob = jo.get("issueTime");
 		prgm.setReleaseYear(ob.toString());
 
-		String strValue = getAreaOrGenre(jo, "types");
+		strValue = getAreaOrGenre(jo, "types");
 		prgm.setGenre(strValue);
 		
 		// 地区
@@ -227,6 +239,21 @@ public class IqiyiAnimationProcessor implements PageProcessor,Task {
 		prgm.setDescription(ob.toString());
 		
 		return;
+	}
+
+	private String getDirectorOrActor(JSONObject jo, String key) {
+		Object ob;
+		StringBuilder sb = new StringBuilder(100);
+		ob = jo.get(key);
+		JSONArray joa = (JSONArray)ob;
+		Iterator<Object> it = joa.iterator();
+		while(it.hasNext()) {
+            sb.append(it.next().toString()).append("/");
+		}
+		if (sb.length() > 0) {
+			sb.setLength(sb.length() - 1);
+		}
+		return sb.toString();
 	}
 
 	private String getAreaOrGenre(JSONObject jo, String keyName) {
@@ -304,7 +331,10 @@ public class IqiyiAnimationProcessor implements PageProcessor,Task {
 				String playUrl = subE.attr("href");
 				episode.setPlayUrl(playUrl);
 
-				String picUrl = e.select("a img").first().attr("src");
+				String picUrl = e.select("a img").first().attr("data-lazy");
+				if (picUrl == null) {
+					picUrl = e.select("a img").first().attr("src");
+				}
 				episode.setPicUrl(picUrl);
 
 				String dur = e.select("a span.s2").first().text();
