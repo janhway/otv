@@ -2,10 +2,14 @@ package com.lucine.spider.iqiyi;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import us.codecraft.webmagic.Page;
+import us.codecraft.webmagic.Request;
 import us.codecraft.webmagic.Site;
 import us.codecraft.webmagic.Spider;
+import us.codecraft.webmagic.Task;
 import us.codecraft.webmagic.downloader.Downloader;
 import us.codecraft.webmagic.downloader.HttpClientDownloader;
 import us.codecraft.webmagic.pipeline.FilePipeline;
@@ -22,7 +26,7 @@ import com.lucine.spider.entity.Episode;
 import com.lucine.spider.entity.MediaType;
 import com.lucine.spider.entity.Program;
 
-public class IqiyiMovieProcessor implements PageProcessor {
+public class IqiyiMovieProcessor implements PageProcessor, Task {
 
 	private final Logger log = LoggerFactory.getLogger(IqiyiMovieProcessor.class);
 	private final Site site = Site.me().setDomain("www.iqiyi.com").setCharset("utf-8");
@@ -73,7 +77,7 @@ public class IqiyiMovieProcessor implements PageProcessor {
 			log.info("nextPage=" + nextPage);
 
 			if (nextPage != null && nextPage.length() > 0) {
-				page.addTargetRequest(nextPage);
+				//page.addTargetRequest(nextPage);
 			}
 
 			if (detailsRequests.size() > 0) {
@@ -95,27 +99,26 @@ public class IqiyiMovieProcessor implements PageProcessor {
 			Program prgm = new Program();
 			prgm.setCpName("iqiyi");
 			prgm.setMediaType(MediaType.MOVIES);
-			
-			StringBuilder bld = new StringBuilder();
 
 			Document doc = page.getHtml().getDocument();
 
-			String title = doc.select("meta[itemprop=name]").first().attr("content");
+			String title = getItem(doc, "meta[itemprop=name]");
 			prgm.setTitle(title);
 
 			Elements eles = doc.select("div[data-widget-moviepaybtn=btn]");
 			if (eles != null && eles.first() != null) {
-				log.info("Igore program which title=" + title);
+				log.info("Igore payed program which title=" + title);
 				page.setSkip(true);
 				return;
 			}
 
-			// 年代   格式 20120102 fix it later
-			String datePublished = doc.select("meta[itemprop=datePublished]").first().attr("content");
-			prgm.setReleaseYear(datePublished);
+			// 年代 格式 20120102 fix it later
+			String datePublished = getItem(doc, "meta[itemprop=datePublished]");
+			prgm.setReleaseYear(transformDate(datePublished));
 
 			// 导演
-			String directors = getDirectorOrActor(doc, "span[itemprop=director]");
+			String directors = getDirectorOrActor(doc,
+					"span[itemprop=director]");
 			prgm.setDirectors(directors);
 
 			// 主演
@@ -123,60 +126,52 @@ public class IqiyiMovieProcessor implements PageProcessor {
 			prgm.setActors(actors);
 
 			// 类型
-			bld.setLength(0);
-			Elements genreEles = doc.select("meta[itemprop=genre]");
-			for (int i = 0; i < genreEles.size(); i++) {
-				bld.append(genreEles.get(i).attr("content"));
-				bld.append("/");
-			}
-			if (bld.length() > 0) {
-				bld.deleteCharAt(bld.length() - 1);
-			}
-			String genre = bld.toString();
-			prgm.setGenre(genre);
+			prgm.setGenre(getGenres(doc));
 
 			// 简介
-			String description = doc.select("meta[itemprop=description]")
-					.first().attr("content");
+			String description = getItem(doc, "meta[itemprop=description]");
 			prgm.setDescription(description);
 
 			// 海报URL
-			String picUrl = doc.select("item meta[itemprop=image]").first()
-					.attr("content");
+			String picUrl = getItem(doc, "item meta[itemprop=image]");
 			prgm.setPicUrl(picUrl);
 
+			// 播放URL
+			prgm.setPlayUrl(page.getUrl().toString());
+
 			// 地区
-			String origCountry = doc
-					.select("item meta[itemprop=contentLocation]").first()
-					.attr("content");
+			String origCountry = getItem(doc,
+					"item meta[itemprop=contentLocation]");
 			prgm.setOriginCountry(origCountry);
 
 			// 评分
-			String ratingValue = doc
-					.select("item div meta[itemprop=ratingValue]").first()
-					.attr("content");
+			String ratingValue = getItem(doc,
+					"item div meta[itemprop=ratingValue]");
 			prgm.setScore(ratingValue);
 
-			// 播放次数  fix it later.
+			// 播放次数
+			String albumId = getAlbumId(doc);
+			if (albumId != null) {
+				String playNum = getPlayNumByAlbumid(albumId);
+				prgm.setPlayNum(playNum);
+			}
 
-			
 			// 子集信息，电影固定只有一个子集
 			Episode ep = new Episode();
 			ep.setTitle(title);
 			ep.setPlayUrl(page.getUrl().toString());
-			
+			ep.setPicUrl(picUrl);
 			// 播放时长
-			String duration = doc.select("item meta[itemprop=duration]")
-					.first().attr("content");
-			ep.setDuration(duration);
-			
+			String duration = getItem(doc, "item meta[itemprop=duration]");
+			ep.setDuration(transformDuration(duration));
+
 			List<Episode> episodes = new ArrayList<Episode>();
 
 			episodes.add(ep);
 			prgm.setEpisodeList(episodes);
 			prgm.setEpisodeTotalNum("1");
 			prgm.setEpisodeUpdNum("1");
-			
+
 			page.putField(title, prgm);
 
 		} catch (Exception e) {
@@ -184,6 +179,23 @@ public class IqiyiMovieProcessor implements PageProcessor {
 			log.error(page.getUrl().toString());
 			log.error("", e);
 		}
+	}
+	
+	private String getItem(Document doc, String cssSelector) {
+		return doc.select(cssSelector).first().attr("content");
+	}
+
+	private String getGenres(Document doc) {
+		StringBuilder bld = new StringBuilder(100);
+		Elements genreEles = doc.select("meta[itemprop=genre]");
+		for (int i = 0; i < genreEles.size(); i++) {
+			bld.append(genreEles.get(i).attr("content"));
+			bld.append("/");
+		}
+		if (bld.length() > 0) {
+			bld.deleteCharAt(bld.length() - 1);
+		}
+		return bld.toString();
 	}
 
 	private String getDirectorOrActor(Document doc, String cssSelector) {
@@ -201,12 +213,79 @@ public class IqiyiMovieProcessor implements PageProcessor {
 		if (bld.length() > 0) {
 			bld.deleteCharAt(bld.length() - 1);
 		}
-		String directors = bld.toString();
-		return directors;
-	}	
+
+		return bld.toString();
+	}
+	
+	//2010年03月26日 转成20100326
+	private String transformDate(String date) {
+		Pattern p = Pattern.compile("([0-9]{4}).*([0-9]{2}).*([0-9]{2})");
+		Matcher m = p.matcher(date);
+		if (m.find()) {
+			return m.group(1)+m.group(2)+m.group(3);
+		}
+		return null;
+	}
+	
+	// P5872S 转成5872
+	private String transformDuration(String duration) {
+		Pattern p = Pattern.compile("\\s*P(\\d+)S\\s*");
+		Matcher m = p.matcher(duration);
+		if (m.find()) {
+			return m.group(1);
+		}
+		return null;
+	}
+	
+	private String getScoreByAlbumid(String albumId) {
+		String url = "http://score.video.qiyi.com/ud/"+albumId+"/";
+		Page page = downLoader.download(new Request(url), this);
+		String data = page.getRawText();
+		log.info("data="+data);
+		Pattern p = Pattern.compile(".*,\"score\":\\s*(\\d+\\.\\d).*");
+		Matcher m = p.matcher(data);
+		if(m.find()) {
+			return m.group(1);
+		}
+		return null;
+	}
+
+	private String getPlayNumByAlbumid(String albumId) {
+		//http://cache.video.qiyi.com/jp/pc/167419/
+		String url = "http://cache.video.qiyi.com/jp/pc/"+albumId+"/";
+		Page page = downLoader.download(new Request(url), this);
+		String data = page.getRawText();
+		log.info("data="+data);
+		Pattern p = Pattern.compile(".*:\\s*(\\d+)}]");
+		Matcher m = p.matcher(data);
+		if(m.find()) {
+			return m.group(1);
+		}
+		return null;
+	}
+
+	private String getAlbumId(Document doc) {
+		String albumId = null;
+		try {
+			Element albumIdEle = doc.select("div.videoArea").first()
+					.select("div#flashbox").first();
+			albumId = albumIdEle.attr("data-player-albumid");
+			log.info("albumId=" + albumId);
+		} catch (Exception e) {
+			log.error("", e);
+		}
+		return albumId;
+	}
 
 	public Site getSite() {
 		return site;
+	}
+
+	public String getUUID() {
+		if (site != null) {
+            return site.getDomain();
+        }
+		return "no UUID-fix it later";
 	}
 	
 	public void run() {
@@ -219,6 +298,7 @@ public class IqiyiMovieProcessor implements PageProcessor {
 		IqiyiMovieProcessor pp = new IqiyiMovieProcessor(startUrl,1, new FilePipeline("D:\\logs"),new HttpClientDownloader());
 		pp.run();
 	}
+
 }
 
 // http://www.iqiyi.com/dianying

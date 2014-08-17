@@ -281,7 +281,7 @@ public class AnimationOrTVProcessor implements PageProcessor,Task {
 				episode.setPicUrl(picUrl);
 
 				String dur = e.select("a span.s2").first().text();
-				episode.setDuration(dur);
+				episode.setDuration(transformDuration(dur));
 
 				episodes.add(episode);
 			}
@@ -321,6 +321,28 @@ public class AnimationOrTVProcessor implements PageProcessor,Task {
 		return episodes;
 	}
 
+	// 15:20 转成920
+	private String transformDuration(String duration) {
+		Pattern p = Pattern.compile("\\s*(\\d+):(\\d+)\\s*");
+		Matcher m = p.matcher(duration);
+		if (m.find()) {
+			return String.valueOf(Integer.valueOf(m.group(1)) * 60
+					+ Integer.valueOf(m.group(2)));
+		}
+		return null;
+	}
+	
+	public Site getSite() {
+		return site;
+	}
+
+	public String getUUID() {
+		if (site != null) {
+            return site.getDomain();
+        }
+		return "no UUID-fix it later";
+	}
+		
 	public void run() {
 		// when thread can't stop correctly,JVM will not terminate. fix it later. 
 		Spider.create(this).thread(threadNum).addUrl(startUrl).addPipeline(pipeline).run();
@@ -334,15 +356,5 @@ public class AnimationOrTVProcessor implements PageProcessor,Task {
 		startUrl = "http://list.iqiyi.com/www/2/-------------10-1-1-iqiyi--.html";
 		AnimationOrTVProcessor ppa = new AnimationOrTVProcessor(MediaType.TV, startUrl,1, new FilePipeline("D:\\logs"),new HttpClientDownloader());
 		ppa.run();
-	}
-	
-	public Site getSite() {
-		return site;
-	}
-
-	public String getUUID() {
-		if (site != null) {
-            return site.getDomain();
-        }
-		return "no UUID-fix it later";
-	}}
+	}	
+}
