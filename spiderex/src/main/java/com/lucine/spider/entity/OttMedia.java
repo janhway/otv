@@ -189,6 +189,15 @@ public class OttMedia {
 //		
 //		return jo.toString();
 	}
+	
+	static public OttMedia JsonString2Program(String jsonString) {
+		JSONObject jo = JSONObject.parseObject(jsonString);
+		return JSONObject.toJavaObject(jo, OttMedia.class);
+	}
+	
+	static public String JsonString2Program(OttMedia om) {
+		return JSONObject.toJSONString(om);
+	}	
 
 	public String getPlayNum() {
 		return playNum;
