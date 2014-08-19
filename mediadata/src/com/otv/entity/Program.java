@@ -1,17 +1,22 @@
 package com.otv.entity;
 
+import java.util.List;
+
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
 @Entity  
 @Table(name="PROGRAM")  
 public class Program {
 	
-	private int id;
+	private long id;
 	
 	// 媒体类型 mediaType 电影、电视剧、动漫、综艺
 	//private MediaType mediaType;
@@ -50,19 +55,21 @@ public class Program {
 	//private String playNum;
 	
 	// 总集数 episodeTotalNum
-	private String episodeTotalNum;
+	//private String episodeTotalNum;
 
 	// 更新集数 episodeUpdatedNum
-	private String episodeUpdNum;
+	//private String episodeUpdNum;
+	
+	private List<Episode> episodeList;
 		
 	@Id  
     @Column(name = "ID")
     @GeneratedValue(strategy=GenerationType.AUTO)  
-	public int getId() {
+	public long getId() {
 		return id;
 	}
 
-	public void setId(int id) {
+	public void setId(long id) {
 		this.id = id;
 	}
 	
@@ -148,22 +155,13 @@ public class Program {
 		this.playUrl = playUrl;
 	}
 
-	@Column(name = "ToTAL_NUM")
-	public String getEpisodeTotalNum() {
-		return episodeTotalNum;
+	@OneToMany(mappedBy = "program", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+	public List<Episode> getEpisodeList() {
+		return episodeList;
 	}
 
-	public void setEpisodeTotalNum(String episodeTotalNum) {
-		this.episodeTotalNum = episodeTotalNum;
-	}
-
-	@Column(name = "UPDATED_NUM")
-	public String getEpisodeUpdNum() {
-		return episodeUpdNum;
-	}
-
-	public void setEpisodeUpdNum(String episodeUpdNum) {
-		this.episodeUpdNum = episodeUpdNum;
+	public void setEpisodeList(List<Episode> episodeList) {
+		this.episodeList = episodeList;
 	}	
 
 }
