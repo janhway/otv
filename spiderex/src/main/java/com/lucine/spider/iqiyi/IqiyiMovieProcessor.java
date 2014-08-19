@@ -22,9 +22,9 @@ import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.lucine.spider.entity.Episode;
+import com.lucine.spider.entity.SubStoryInfo;
 import com.lucine.spider.entity.MediaType;
-import com.lucine.spider.entity.Program;
+import com.lucine.spider.entity.OttMedia;
 
 public class IqiyiMovieProcessor implements PageProcessor, Task {
 
@@ -96,7 +96,7 @@ public class IqiyiMovieProcessor implements PageProcessor, Task {
 	private void parseMediaDetailInfo(Page page) {
 
 		try {
-			Program prgm = new Program();
+			OttMedia prgm = new OttMedia();
 			prgm.setCpName("iqiyi");
 			prgm.setMediaType(MediaType.MOVIES);
 
@@ -157,7 +157,7 @@ public class IqiyiMovieProcessor implements PageProcessor, Task {
 			}
 
 			// 子集信息，电影固定只有一个子集
-			Episode ep = new Episode();
+			SubStoryInfo ep = new SubStoryInfo();
 			ep.setTitle(title);
 			ep.setPlayUrl(page.getUrl().toString());
 			ep.setPicUrl(picUrl);
@@ -165,7 +165,7 @@ public class IqiyiMovieProcessor implements PageProcessor, Task {
 			String duration = getItem(doc, "item meta[itemprop=duration]");
 			ep.setDuration(transformDuration(duration));
 
-			List<Episode> episodes = new ArrayList<Episode>();
+			List<SubStoryInfo> episodes = new ArrayList<SubStoryInfo>();
 
 			episodes.add(ep);
 			prgm.setEpisodeList(episodes);

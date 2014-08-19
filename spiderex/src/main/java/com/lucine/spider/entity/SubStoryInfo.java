@@ -2,7 +2,7 @@ package com.lucine.spider.entity;
 
 import com.alibaba.fastjson.JSONObject;
 
-public class Episode {
+public class SubStoryInfo {
 	//子集名称   title
 	private String title;
 	//播放URL    playURL

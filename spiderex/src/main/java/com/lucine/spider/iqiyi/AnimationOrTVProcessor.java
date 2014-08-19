@@ -26,9 +26,9 @@ import us.codecraft.webmagic.processor.PageProcessor;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.lucine.spider.entity.Episode;
+import com.lucine.spider.entity.SubStoryInfo;
 import com.lucine.spider.entity.MediaType;
-import com.lucine.spider.entity.Program;
+import com.lucine.spider.entity.OttMedia;
 
 public class AnimationOrTVProcessor implements PageProcessor,Task {
 	
@@ -107,7 +107,7 @@ public class AnimationOrTVProcessor implements PageProcessor,Task {
 		try {
 			Document doc = page.getHtml().getDocument();
 			
-			Program prgm = new Program();
+			OttMedia prgm = new OttMedia();
 			prgm.setCpName("iqiyi");
 			prgm.setMediaType(MediaType.ANIMATION);
 			
@@ -122,7 +122,7 @@ public class AnimationOrTVProcessor implements PageProcessor,Task {
 				return;
 			}
 			
-			List<Episode> episodes = getEpisodeList(doc);
+			List<SubStoryInfo> episodes = getEpisodeList(doc);
 			prgm.setEpisodeList(episodes);
 			
 			page.putField(prgm.getTitle(), prgm);
@@ -136,7 +136,7 @@ public class AnimationOrTVProcessor implements PageProcessor,Task {
 		}
 	}
 	
-	private void getInfoByScriptArea(Document doc, Program prgm) {
+	private void getInfoByScriptArea(Document doc, OttMedia prgm) {
 		
 		Pattern p = Pattern.compile(".*var\\s*albumInfo\\s*=\\s*(\\{.*\\}).*");
 		
@@ -252,13 +252,13 @@ public class AnimationOrTVProcessor implements PageProcessor,Task {
 		return sb.toString();
 	}	
 
-	private List<Episode> parseEpisodeListInfo(Page page) {
+	private List<SubStoryInfo> parseEpisodeListInfo(Page page) {
 
 		page.setSkip(true);
 
-		List<Episode> episodes = null;
+		List<SubStoryInfo> episodes = null;
 		try {
-			episodes = new ArrayList<Episode>();
+			episodes = new ArrayList<SubStoryInfo>();
 
 			// <li><a data-widget-qidanadd="qidanadd"
 			Document doc = page.getHtml().getDocument();
@@ -268,7 +268,7 @@ public class AnimationOrTVProcessor implements PageProcessor,Task {
 				Element subE = e.select("p a").first();
 				String title = subE.text();
 
-				Episode episode = new Episode();
+				SubStoryInfo episode = new SubStoryInfo();
 				episode.setTitle(title);
 
 				String playUrl = subE.attr("href");
@@ -293,9 +293,9 @@ public class AnimationOrTVProcessor implements PageProcessor,Task {
 		return episodes;
 	}
 	
-	private List<Episode> getEpisodeList(Document doc)
+	private List<SubStoryInfo> getEpisodeList(Document doc)
 	{
-		List<Episode> episodes = new ArrayList<Episode>();
+		List<SubStoryInfo> episodes = new ArrayList<SubStoryInfo>();
 		
 		//div id="j-album-1" style="display: none;">/common/topicinc/294633_26361/playlist_1.inc</div>
         int i=0;

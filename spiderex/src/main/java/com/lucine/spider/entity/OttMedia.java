@@ -4,7 +4,7 @@ import java.util.List;
 
 import com.alibaba.fastjson.JSONObject;
 
-public class Program {
+public class OttMedia {
 	// cp名字
 	private String cpName;
 	
@@ -50,7 +50,7 @@ public class Program {
 	// 更新集数 episodeUpdatedNum
 	private String episodeUpdNum;
 	
-	private List<Episode> episodeList;
+	private List<SubStoryInfo> episodeList;
 
 	public String getCpName() {
 		return cpName;
@@ -157,34 +157,37 @@ public class Program {
 		this.episodeUpdNum = episodeUpdNum;
 	}
 
-	public List<Episode> getEpisodeList() {
+	public List<SubStoryInfo> getEpisodeList() {
 		return episodeList;
 	}
 
-	public void setEpisodeList(List<Episode> episodeList) {
+	public void setEpisodeList(List<SubStoryInfo> episodeList) {
 		this.episodeList = episodeList;
 	}
 	
 	public String toString() {
-		JSONObject jo = new JSONObject();
-		jo.put("cpName", cpName);
-		jo.put("mediaType", mediaType);
-		jo.put("title", title);	
-		jo.put("directors", directors);
-		jo.put("actors", actors);
-		jo.put("releaseYear", releaseYear);	
-		jo.put("genre", genre);
-		jo.put("originCountry", originCountry);
-		jo.put("picUrl", picUrl);
-		jo.put("playUrl", playUrl);
-		jo.put("score", score);
-		jo.put("playNum", playNum);
-		jo.put("episodeTotalNum", episodeTotalNum);
-		jo.put("episodeUpdNum", episodeUpdNum);
-		jo.put("description", description);
-		jo.put("episodeList", episodeList);
+		return JSONObject.toJSONString(this);
 		
-		return jo.toString();
+		
+//		JSONObject jo = new JSONObject();
+//		jo.put("cpName", cpName);
+//		jo.put("mediaType", mediaType);
+//		jo.put("title", title);	
+//		jo.put("directors", directors);
+//		jo.put("actors", actors);
+//		jo.put("releaseYear", releaseYear);	
+//		jo.put("genre", genre);
+//		jo.put("originCountry", originCountry);
+//		jo.put("picUrl", picUrl);
+//		jo.put("playUrl", playUrl);
+//		jo.put("score", score);
+//		jo.put("playNum", playNum);
+//		jo.put("episodeTotalNum", episodeTotalNum);
+//		jo.put("episodeUpdNum", episodeUpdNum);
+//		jo.put("description", description);
+//		jo.put("episodeList", episodeList);
+//		
+//		return jo.toString();
 	}
 
 	public String getPlayNum() {
