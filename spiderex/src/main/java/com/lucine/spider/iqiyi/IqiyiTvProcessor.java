@@ -24,7 +24,7 @@ public class IqiyiTvProcessor  {
 	
 	public static void main(String[] args) {
 		String startUrl = "http://list.iqiyi.com/www/2/-------------10-1-1-iqiyi--.html";
-		IqiyiTvProcessor pp = new IqiyiTvProcessor(startUrl,1, new FilePipeline("D:\\logs"),new HttpClientDownloader());
+		IqiyiTvProcessor pp = new IqiyiTvProcessor(startUrl,1, new HttpPipeline(),new HttpClientDownloader());
 		pp.run();
 	}
 }

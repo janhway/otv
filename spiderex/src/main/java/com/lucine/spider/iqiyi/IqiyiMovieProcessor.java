@@ -295,7 +295,7 @@ public class IqiyiMovieProcessor implements PageProcessor, Task {
 	
 	public static void main(String[] args) {
 		String startUrl = "http://list.iqiyi.com/www/1/-------------10-1-1-iqiyi--.html";
-		IqiyiMovieProcessor pp = new IqiyiMovieProcessor(startUrl,1, new FilePipeline("D:\\logs"),new HttpClientDownloader());
+		IqiyiMovieProcessor pp = new IqiyiMovieProcessor(startUrl,1, new HttpPipeline(),new HttpClientDownloader());
 		pp.run();
 	}
 

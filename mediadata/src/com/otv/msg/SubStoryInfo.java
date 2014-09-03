@@ -1,4 +1,4 @@
-package com.lucine.spider.entity;
+package com.otv.msg;
 
 import com.alibaba.fastjson.JSONObject;
 
@@ -44,7 +44,7 @@ public class SubStoryInfo {
 		this.duration = duration;
 	}
 	
-	/*public String toString() {
+	public String toString() {
 		JSONObject jo = new JSONObject();
 		jo.put("title", title);
 		jo.put("playUrl", playUrl);
@@ -52,5 +52,5 @@ public class SubStoryInfo {
 		jo.put("description", description);
 		jo.put("duration", duration);		
 		return jo.toString();
-	}*/
+	}
 }
