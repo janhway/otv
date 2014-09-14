@@ -13,7 +13,6 @@ import javax.persistence.Table;
 @Entity  
 @Table(name="MOVIE")
 public class Movie {
-
 	
 	private long id;
 	

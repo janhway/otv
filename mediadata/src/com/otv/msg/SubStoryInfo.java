@@ -1,6 +1,6 @@
 package com.otv.msg;
 
-import com.alibaba.fastjson.JSONObject;
+import net.sf.json.JSONObject;
 
 public class SubStoryInfo {
 	//子集名称   title
@@ -45,12 +45,14 @@ public class SubStoryInfo {
 	}
 	
 	public String toString() {
-		JSONObject jo = new JSONObject();
-		jo.put("title", title);
-		jo.put("playUrl", playUrl);
-		jo.put("picUrl", picUrl);
-		jo.put("description", description);
-		jo.put("duration", duration);		
+		JSONObject jo = JSONObject.fromObject(this);
 		return jo.toString();
+//		JSONObject jo = new JSONObject();
+//		jo.put("title", title);
+//		jo.put("playUrl", playUrl);
+//		jo.put("picUrl", picUrl);
+//		jo.put("description", description);
+//		jo.put("duration", duration);		
+//		return jo.toString();
 	}
 }

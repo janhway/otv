@@ -15,34 +15,34 @@
 	</properties>
 
 	<dependencies>
-		<dependency>
-			<groupId>us.codecraft</groupId>
-			<artifactId>webmagic-core</artifactId>
-			<version>0.5.2</version>
-		</dependency>
-		<!-- <dependency>
-			<groupId>us.codecraft</groupId>
-			<artifactId>webmagic-extension</artifactId>
-			<version>0.5.2</version>
-		</dependency>
-		<dependency>
-			<groupId>us.codecraft</groupId>
-			<artifactId>webmagic-lucene</artifactId>
-			<version>0.4.4-SNAPSHOT</version>
-		</dependency>  -->
+	<dependency>
+		<groupId>net.sf.json-lib</groupId>
+		<artifactId>json-lib</artifactId>
+		<version>2.4</version>
+		<classifier>jdk15</classifier><!--指定jdk版本 -->
+	</dependency>
 
-		<dependency>
-			<groupId>org.apache.solr</groupId>
-			<artifactId>solr-solrj</artifactId>
-			<version>4.6.0</version>
-		</dependency>
+	<dependency>
+		<groupId>us.codecraft</groupId>
+		<artifactId>webmagic-core</artifactId>
+		<version>0.5.2</version>
+	</dependency>
+	<!-- <dependency> <groupId>us.codecraft</groupId> <artifactId>webmagic-extension</artifactId> 
+		<version>0.5.2</version> </dependency> <dependency> <groupId>us.codecraft</groupId> 
+		<artifactId>webmagic-lucene</artifactId> <version>0.4.4-SNAPSHOT</version> 
+		</dependency> -->
 
+	<dependency>
+		<groupId>org.apache.solr</groupId>
+		<artifactId>solr-solrj</artifactId>
+		<version>4.6.0</version>
+	</dependency>
 
-		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<version>3.8.1</version>
-			<scope>test</scope>
-		</dependency>
-	</dependencies>
+	<dependency>
+		<groupId>junit</groupId>
+		<artifactId>junit</artifactId>
+		<version>3.8.1</version>
+		<scope>test</scope>
+	</dependency>
+</dependencies>
 </project>

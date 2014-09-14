@@ -2,7 +2,7 @@ package com.otv.msg;
 
 import java.util.List;
 
-import com.alibaba.fastjson.JSONObject;
+import net.sf.json.JSONObject;
 
 public class OttMedia {
 	// cp名字
@@ -165,11 +165,10 @@ public class OttMedia {
 		this.episodeList = episodeList;
 	}
 	
-	public String toString() {
-		return JSONObject.toJSONString(this);
+	public String toString() {		
 		
-		
-//		JSONObject jo = new JSONObject();
+		JSONObject jo = JSONObject.fromObject(this);
+		return jo.toString();
 //		jo.put("cpName", cpName);
 //		jo.put("mediaType", mediaType);
 //		jo.put("title", title);	
@@ -189,15 +188,6 @@ public class OttMedia {
 //		
 //		return jo.toString();
 	}
-	
-	static public OttMedia JsonString2Program(String jsonString) {
-		JSONObject jo = JSONObject.parseObject(jsonString);
-		return JSONObject.toJavaObject(jo, OttMedia.class);
-	}
-	
-	public String JsonString2Program() {
-		return JSONObject.toJSONString(this);
-	}	
 
 	public String getPlayNum() {
 		return playNum;

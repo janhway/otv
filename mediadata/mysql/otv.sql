@@ -1,0 +1,1 @@
+CREATE DATABASE `otv` DEFAULT CHARACTER SET utf8;grant all on otv.* to 'opentv'@'%' identified by 'opentv';grant all on otv.* to 'opentv'@'localhost' identified by 'opentv';flush privileges;

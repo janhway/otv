@@ -32,8 +32,9 @@ public class HttpPipeline implements Pipeline {
 			OttMedia om = (OttMedia) entry.getValue();
 			try {
 				log.info(om.toString());
+				byte[] aa = om.toString().getBytes("utf-8");
 				
-				Utils.httpPost(om.toString());
+				Utils.httpPost(aa);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}

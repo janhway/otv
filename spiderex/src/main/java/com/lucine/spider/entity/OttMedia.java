@@ -2,8 +2,7 @@ package com.lucine.spider.entity;
 
 import java.util.List;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
+import net.sf.json.JSONObject;
 
 public class OttMedia {
 	// cp名字
@@ -166,11 +165,10 @@ public class OttMedia {
 		this.episodeList = episodeList;
 	}
 	
-	public String toString() {
-		return JSON.toJSONString(this);
+	public String toString() {		
 		
-		
-//		JSONObject jo = new JSONObject();
+		JSONObject jo = JSONObject.fromObject(this);
+		return jo.toString();
 //		jo.put("cpName", cpName);
 //		jo.put("mediaType", mediaType);
 //		jo.put("title", title);	
@@ -186,19 +184,10 @@ public class OttMedia {
 //		jo.put("episodeTotalNum", episodeTotalNum);
 //		jo.put("episodeUpdNum", episodeUpdNum);
 //		jo.put("description", description);
-		//jo.put("episodeList", episodeList);
-		
-		//return jo.toString();
+//		jo.put("episodeList", episodeList);
+//		
+//		return jo.toString();
 	}
-	
-//	static public OttMedia JsonString2OttMedia(String jsonString) {
-//		JSONObject jo = JSONObject.parseObject(jsonString);
-//		return JSONObject.toJavaObject(jo, OttMedia.class);
-//	}
-	
-	public String OttMedia2JsonString() {
-		return JSON.toJSONString(this);
-	}	
 
 	public String getPlayNum() {
 		return playNum;

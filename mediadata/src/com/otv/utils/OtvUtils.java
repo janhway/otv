@@ -11,7 +11,8 @@ public class OtvUtils {
 
 	static public String readHttpContent(HttpServletRequest req) {
 		String ret = null;
-		final int maxLen = 8192;
+		int maxLen = req.getContentLength();
+		maxLen = (maxLen < 128)?128:maxLen;
 		byte[] readBuf = new byte[maxLen];
 
 		try {

@@ -73,7 +73,7 @@ public class Program {
 		this.id = id;
 	}
 	
-	@Column(name = "TITLE")
+	@Column(name = "TITLE", unique=true)
 	public String getTitle() {
 		return title;
 	}
@@ -128,7 +128,7 @@ public class Program {
 	}
 	
 
-	@Column(name = "DESCRIPTION")
+	@Column(name = "DESCRIPTION", length=1024)
 	public String getDescription() {
 		return description;
 	}

@@ -1,6 +1,6 @@
 package com.lucine.spider.entity;
 
-import com.alibaba.fastjson.JSONObject;
+import net.sf.json.JSONObject;
 
 public class SubStoryInfo {
 	//子集名称   title
@@ -44,13 +44,15 @@ public class SubStoryInfo {
 		this.duration = duration;
 	}
 	
-	/*public String toString() {
-		JSONObject jo = new JSONObject();
-		jo.put("title", title);
-		jo.put("playUrl", playUrl);
-		jo.put("picUrl", picUrl);
-		jo.put("description", description);
-		jo.put("duration", duration);		
+	public String toString() {
+		JSONObject jo = JSONObject.fromObject(this);
 		return jo.toString();
-	}*/
+//		JSONObject jo = new JSONObject();
+//		jo.put("title", title);
+//		jo.put("playUrl", playUrl);
+//		jo.put("picUrl", picUrl);
+//		jo.put("description", description);
+//		jo.put("duration", duration);		
+//		return jo.toString();
+	}
 }
