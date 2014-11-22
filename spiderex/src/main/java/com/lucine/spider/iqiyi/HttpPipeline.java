@@ -2,8 +2,6 @@ package com.lucine.spider.iqiyi;
 
 import java.util.Map;
 
-import org.apache.solr.client.solrj.SolrServer;
-import org.apache.solr.common.SolrInputDocument;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,9 +30,9 @@ public class HttpPipeline implements Pipeline {
 			OttMedia om = (OttMedia) entry.getValue();
 			try {
 				log.info(om.toString());
-				byte[] aa = om.toString().getBytes("utf-8");
+				byte[] bytesOM = om.toString().getBytes("utf-8");
 				
-				Utils.httpPost(aa);
+				Utils.httpPost(bytesOM);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
